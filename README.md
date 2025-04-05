@@ -6,17 +6,17 @@ Un bot Telegram scritto in PHP che interagisce con [LibreNMS](https://www.libren
 
 ## 🚀 Funzionalità principali
 
-| Comando Telegram            | Descrizione                                                                 |
-|----------------------------|-----------------------------------------------------------------------------|
-| `/help`                    | Mostra il menu dei comandi disponibili                                      |
-| `/list`                    | Elenca gli alert attivi presenti su LibreNMS                               |
-| `/ack <id> [nota]`         | Esegue un *acknowledge* su un alert specificando una nota opzionale        |
-| `/list_device [filtro]`    | Elenca i dispositivi filtrando per hostname, IP, OS, sysName, type o display |
-| `/ping <ip|host>`          | Ping (5 pacchetti) al target specificato                                   |
-| `/trace <ip|host>`         | Traceroute verso il target specificato                                     |
-| `/nmap <ip|host>`          | Esegue uno scan TCP SYN + Versione servizi                                 |
-| `/ns <ip|host>`            | Effettua una richiesta DNS via nslookup                                    |
-| `/log`                     | Mostra gli ultimi log del bot                                              |
+### Comandi supportati
+
+- **`/help`** — Mostra il menu dei comandi disponibili
+- **`/list`** — Elenca gli alert attivi presenti su LibreNMS
+- **`/ack <id> [nota]`** — Esegue un *acknowledge* su un alert con nota opzionale
+- **`/list_device [filtro]`** — Elenca dispositivi filtrabili per hostname, IP, OS, sysName, display, type
+- **`/ping <ip|host>`** — Ping (5 pacchetti) verso il target specificato
+- **`/trace <ip|host>`** — Traceroute verso il target specificato
+- **`/nmap <ip|host>`** — Scansione TCP SYN con rilevamento versione servizi
+- **`/ns <ip|host>`** — Richiesta DNS via `nslookup`
+- **`/log`** — Mostra gli ultimi log generati dal bot
 
 ---
 
