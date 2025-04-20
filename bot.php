@@ -61,7 +61,8 @@ echo "🤖 Bot avviato. Autorizzati: " . implode(', ', $allowedChatIds) . " | Th
  * 
  * @param string $line La stringa da scrivere nel log.
  */
-function logEvent($line) {
+function logEvent($line)
+{
     global $logFile;
     file_put_contents($logFile, date('[Y-m-d H:i:s] ') . $line . "\n", FILE_APPEND);
 }
@@ -74,7 +75,8 @@ function logEvent($line) {
  * @param string $text Testo del messaggio da inviare.
  * @param int|null $threadId ID del thread (opzionale).
  */
-function sendTelegram($chatId, $text, $threadId = null) {
+function sendTelegram($chatId, $text, $threadId = null)
+{
     global $telegramApi;
     $params = [
         'chat_id' => $chatId,
@@ -129,9 +131,7 @@ while (true) {
             $logContent = file_exists($logFile) ? file_get_contents($logFile) : "Nessun log disponibile.";
             $reply = substr($logContent, -3800);
             sendTelegram($chatId, "🗒 Ultimi log:\n\n$reply", $threadId);
-        }
-
-        elseif (preg_match('/^\/help$/i', $message)) {
+        } elseif (preg_match('/^\/help$/i', $message)) {
             // Mostra il menu dei comandi disponibili
             $text = "📖 Comandi disponibili:\n";
             $text .= "/ack <id> [nota] → Acknowledge alert LibreNMS\n";
@@ -144,9 +144,7 @@ while (true) {
             $text .= "/log → Mostra log\n";
             $text .= "/help → Mostra questo menu";
             sendTelegram($chatId, $text, $threadId);
-        }
-
-        elseif (preg_match('/^\/ack\s+(\d+)(?:\s+(.+))?/i', $message, $matches)) {
+        } elseif (preg_match('/^\/ack\s+(\d+)(?:\s+(.+))?/i', $message, $matches)) {
             // Esegue l'acknowledge di un alert su LibreNMS
             $alertId = $matches[1];
             $note = isset($matches[2]) ? $matches[2] : 'Acknowledged via Telegram';
@@ -166,10 +164,8 @@ while (true) {
                 ? "✅ ACK eseguito su alert $alertId\nNota: $note"
                 : "❌ Errore ACK alert $alertId\nCodice: $httpCode\n$res";
             sendTelegram($chatId, $msg, $threadId);
-        }
-
-        elseif (preg_match('/^\/list$/i', $message)) {
-            // Elenca gli alert attivi su LibreNMS
+        } elseif (preg_match('/^\/list$/i', $message)) {
+            // Elenca gli alert attivi su LibreNMS con dettagli recuperati da device_id e rule_id
             $ch = curl_init("$librenmsUrl/api/v0/alerts?state=1");
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -181,13 +177,58 @@ while (true) {
             $alerts = json_decode($res, true);
             $alerts = isset($alerts['alerts']) ? $alerts['alerts'] : [];
             $text = empty($alerts) ? "✅ Nessun alert attivo." : "⚠️ Alert attivi:\n";
-            foreach ($alerts as $a) {
-                $text .= "🆔 {$a['id']} | 📅 {$a['timestamp']}\n";
-            }
-            sendTelegram($chatId, $text, $threadId);
-        }
 
-        elseif (preg_match('/^\/list_device(?:\s+(.+))?/i', $message, $matches)) {
+            foreach ($alerts as $a) {
+                $id = $a['id'];
+                $timestamp = $a['timestamp'] ?? 'n/d';
+                $device_id = $a['device_id'] ?? null;
+                $rule_id = $a['rule_id'] ?? null;
+
+                // Nome regola
+                $ruleName = 'N/D';
+                if ($rule_id !== null) {
+                    $chRule = curl_init("$librenmsUrl/api/v0/rules/$rule_id");
+                    curl_setopt($chRule, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($chRule, CURLOPT_HTTPHEADER, [
+                        "X-Auth-Token: $librenmsToken",
+                        "Content-Type: application/json"
+                    ]);
+                    $resRule = curl_exec($chRule);
+                    curl_close($chRule);
+                    $ruleData = json_decode($resRule, true);
+                    if (isset($ruleData['rules'][0]['name'])) {
+                        $ruleName = $ruleData['rules'][0]['name'];
+                    }
+                }
+
+                // Info device
+                $hostname = 'sconosciuto';
+                $ip = 'n/a';
+                if ($device_id !== null) {
+                    $chDev = curl_init("$librenmsUrl/api/v0/devices/$device_id");
+                    curl_setopt($chDev, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($chDev, CURLOPT_HTTPHEADER, [
+                        "X-Auth-Token: $librenmsToken",
+                        "Content-Type: application/json"
+                    ]);
+                    $resDev = curl_exec($chDev);
+                    curl_close($chDev);
+                    $devData = json_decode($resDev, true);
+                    if (isset($devData['devices'][0])) {
+                        $hostname = $devData['devices'][0]['hostname'] ?? $hostname;
+                        $ip = $devData['devices'][0]['ip'] ?? $ip;
+                    }
+                }
+
+                $text .= "🆔 $id | 📅 $timestamp\n";
+                $text .= "💥 Tipo: $ruleName\n";
+                $text .= "🖥️ Host: $hostname\n";
+                $text .= "🌐 IP: $ip\n";
+                $text .= "-------------------------\n";
+            }
+
+            sendTelegram($chatId, $text, $threadId);
+        } elseif (preg_match('/^\/list_device(?:\s+(.+))?/i', $message, $matches)) {
             // Mostra i dispositivi attivi su LibreNMS, con filtro opzionale
             $filtro = isset($matches[1]) ? trim($matches[1]) : '';
             $ch = curl_init("$librenmsUrl/api/v0/devices?type=active");
@@ -198,8 +239,9 @@ while (true) {
             $devices = json_decode($res, true)['devices'] ?? [];
             if ($filtro !== '') {
                 $devices = array_filter($devices, function ($d) use ($filtro) {
-                    foreach (['hostname','sysName','os','display','type','ip'] as $campo) {
-                        if (isset($d[$campo]) && stripos($d[$campo], $filtro) !== false) return true;
+                    foreach (['hostname', 'sysName', 'os', 'display', 'type', 'ip'] as $campo) {
+                        if (isset($d[$campo]) && stripos($d[$campo], $filtro) !== false)
+                            return true;
                     }
                     return false;
                 });
@@ -212,40 +254,34 @@ while (true) {
                     $msg .= "🖥️ {$d['hostname']}";
                     $msg .= isset($d['sysName']) ? " ({$d['sysName']})" : '';
                     $msg .= "\n📶 Stato: " . (isset($d['status']) ? $d['status'] : 'unknown') . " | ID: {$d['device_id']}\n";
-                    if (!empty($d['ip'])) $msg .= "🌐 IP: {$d['ip']}\n";
-                    if (!empty($d['os'])) $msg .= "🧠 OS: {$d['os']}\n";
+                    if (!empty($d['ip']))
+                        $msg .= "🌐 IP: {$d['ip']}\n";
+                    if (!empty($d['os']))
+                        $msg .= "🧠 OS: {$d['os']}\n";
                     $msg .= "\n";
                 }
                 sendTelegram($chatId, $msg, $threadId);
             }
-        }
-
-        elseif (preg_match('/^\/ping\s+([\w\.\-]+)$/i', $message, $matches)) {
+        } elseif (preg_match('/^\/ping\s+([\w\.\-]+)$/i', $message, $matches)) {
             // Esegue un ping verso un host specificato
             $host = escapeshellarg($matches[1]);
             $out = shell_exec("ping -c 5 -W 2 $host 2>&1");
             sendTelegram($chatId, "📡 Ping:
 $out", $threadId);
-        }
-
-        elseif (preg_match('/^\/trace\s+([\w\.\-]+)$/i', $message, $matches)) {
+        } elseif (preg_match('/^\/trace\s+([\w\.\-]+)$/i', $message, $matches)) {
             // Esegue un traceroute verso un host specificato
             $host = escapeshellarg($matches[1]);
             $out = shell_exec("traceroute $host 2>&1");
             sendTelegram($chatId, "🌍 Traceroute:
 $out", $threadId);
-        }
-
-        elseif (preg_match('/^\/nmap\s+([\w\.\-]+)$/i', $message, $matches)) {
+        } elseif (preg_match('/^\/nmap\s+([\w\.\-]+)$/i', $message, $matches)) {
             // Esegue una scansione Nmap verso un host specificato
             $host = escapeshellarg($matches[1]);
             $out = shell_exec("nmap -sS -sV -v -v -Pn $host 2>&1");
             $out = implode("\n", array_slice(explode("\n", $out), 0, 30));
             sendTelegram($chatId, "🛠️ Nmap:
 $out", $threadId);
-        }
-
-        elseif (preg_match('/^\/ns\s+([\w\.\-]+)$/i', $message, $matches)) {
+        } elseif (preg_match('/^\/ns\s+([\w\.\-]+)$/i', $message, $matches)) {
             // Esegue un NSLookup verso un host specificato
             $host = escapeshellarg($matches[1]);
             $out = shell_exec("nslookup $host 2>&1");
