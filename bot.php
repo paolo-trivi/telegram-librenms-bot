@@ -1,5 +1,4 @@
 <?php
-/*
 // ===========================================================
 //  🤖 LibreBot v.0.2
 // ===========================================================
@@ -35,21 +34,9 @@
 //
 //  📤 Formattazione output: Telegram MarkdownV2 con escape automatico
 //  🧠 Backend: REST API di LibreNMS + shell command
+//  ⚠️ ATTENZIONE: Non eseguire questo bot come root!
 // ===========================================================
-*/
-
-// =================== CONFIGURAZIONE ===================
-// Configurazione del bot Telegram, URL di LibreNMS, token di autenticazione e altre impostazioni.
-$botToken = '';
-$librenmsUrl = '';
-$librenmsToken = '';
-
-$allowedChatIds = [];
-$allowedThreads = [];
-
-$logFile = __DIR__ . '/bot.log'; // File di log
-// =====================================================
-
+require_once __DIR__ . '/config.php';
 $telegramApi = "https://api.telegram.org/bot$botToken";
 $lastUpdateId = 0;
 
