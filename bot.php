@@ -1,6 +1,6 @@
 <?php
 // ===========================================================
-//  🤖 LibreBot v.0.2
+//  🤖 LibreBot
 // ===========================================================
 //  Autore: Paolo Trivisonno - Ultimo aggiornamento: 05 apr 2025
 //  Integrazione tra LibreNMS e Telegram per gestire:
@@ -83,6 +83,37 @@ function sendTelegram($chatId, $text, $threadId = null)
     }
 }
 
+/**
+ * Esegue una richiesta API verso LibreNMS.
+ *
+ * @param string $endpoint L'endpoint dell'API (es. "/api/v0/devices").
+ * @param string $method Il metodo HTTP (GET, POST, PUT, DELETE).
+ * @param array|null $data I dati da inviare (per POST o PUT).
+ * @return array|null La risposta decodificata come array associativo o null in caso di errore.
+ */
+function callLibrenmsApi($endpoint, $method = 'GET', $data = null)
+{
+    global $librenmsUrl, $librenmsToken;
+
+    $url = $librenmsUrl . $endpoint;
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        "X-Auth-Token: $librenmsToken",
+        "Content-Type: application/json"
+    ]);
+
+    if ($data !== null) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    }
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($response, true);
+}
+
 // Ciclo infinito per gestire gli aggiornamenti ricevuti dal bot.
 while (true) {
     $url = "$telegramApi/getUpdates?timeout=10&offset=" . ($lastUpdateId + 1);
@@ -135,21 +166,11 @@ while (true) {
             // Esegue l'acknowledge di un alert su LibreNMS
             $alertId = $matches[1];
             $note = isset($matches[2]) ? $matches[2] : 'Acknowledged via Telegram';
-            $data = json_encode(['note' => $note, 'until_clear' => false]);
-            $ch = curl_init("$librenmsUrl/api/v0/alerts/$alertId");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                "X-Auth-Token: $librenmsToken",
-                "Content-Type: application/json"
-            ]);
-            $res = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-            $msg = ($httpCode === 200)
+            $data = ['note' => $note, 'until_clear' => false];
+            $response = callLibrenmsApi("/api/v0/alerts/$alertId", 'PUT', $data);
+            $msg = isset($response) && !empty($response)
                 ? "✅ ACK eseguito su alert $alertId\nNota: $note"
-                : "❌ Errore ACK alert $alertId\nCodice: $httpCode\n$res";
+                : "❌ Errore ACK alert $alertId";
             sendTelegram($chatId, $msg, $threadId);
         } elseif (preg_match('/^\/list$/i', $message)) {
             // Elenca gli alert attivi su LibreNMS con dettagli recuperati da device_id e rule_id
@@ -165,7 +186,8 @@ while (true) {
             $alerts = isset($alerts['alerts']) ? $alerts['alerts'] : [];
             $text = empty($alerts) ? "✅ Nessun alert attivo." : "⚠️ Alert attivi:\n";
 
-            foreach ($alerts as $a) {
+            $alertCount = count($alerts);
+            foreach ($alerts as $index => $a) {
                 $id = $a['id'];
                 $timestamp = $a['timestamp'] ?? 'n/d';
                 $device_id = $a['device_id'] ?? null;
@@ -190,6 +212,7 @@ while (true) {
 
                 // Info device
                 $hostname = 'sconosciuto';
+                $display = 'n/a';
                 $ip = 'n/a';
                 if ($device_id !== null) {
                     $chDev = curl_init("$librenmsUrl/api/v0/devices/$device_id");
@@ -203,6 +226,7 @@ while (true) {
                     $devData = json_decode($resDev, true);
                     if (isset($devData['devices'][0])) {
                         $hostname = $devData['devices'][0]['hostname'] ?? $hostname;
+                        $display = $devData['devices'][0]['display'] ?? $display;
                         $ip = $devData['devices'][0]['ip'] ?? $ip;
                     }
                 }
@@ -210,20 +234,20 @@ while (true) {
                 $text .= "🆔 $id | 📅 $timestamp\n";
                 $text .= "💥 Tipo: $ruleName\n";
                 $text .= "🖥️ Host: $hostname\n";
+                $text .= "📋 Display: $display\n";
                 $text .= "🌐 IP: $ip\n";
-                $text .= "-------------------------\n";
+                // Aggiungi separatore solo se ci sono più alert e non è l'ultimo
+                if ($alertCount > 1 && $index < $alertCount - 1) {
+                    $text .= "-------------------------\n";
+                }
             }
 
             sendTelegram($chatId, $text, $threadId);
         } elseif (preg_match('/^\/list_device(?:\s+(.+))?/i', $message, $matches)) {
             // Mostra i dispositivi attivi su LibreNMS, con filtro opzionale
             $filtro = isset($matches[1]) ? trim($matches[1]) : '';
-            $ch = curl_init("$librenmsUrl/api/v0/devices?type=active");
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ["X-Auth-Token: $librenmsToken"]);
-            $res = curl_exec($ch);
-            curl_close($ch);
-            $devices = json_decode($res, true)['devices'] ?? [];
+            $devices = callLibrenmsApi("/api/v0/devices?type=active");
+            $devices = $devices['devices'] ?? [];
             if ($filtro !== '') {
                 $devices = array_filter($devices, function ($d) use ($filtro) {
                     foreach (['hostname', 'sysName', 'os', 'display', 'type', 'ip'] as $campo) {
