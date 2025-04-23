@@ -53,7 +53,7 @@ Consigliato: esegui il bot in background con `screen`, `tmux` o crea un servizio
 
 ## 🔧 Configurazione rapida
 
-Modifica le variabili all’inizio dello script:
+Modifica le variabili all’interno di config.php:
 
 ```php
 $botToken = 'TOKEN_TELEGRAM';
