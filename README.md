@@ -43,7 +43,7 @@ Un bot Telegram scritto in PHP che interagisce con [LibreNMS](https://www.libren
 ```bash
 git clone https://github.com/paolo-trivi/telegram-librenms-bot.git
 cd telegram-librenms-bot
-nano bot.php # Inserisci token, URL LibreNMS e chat_id autorizzati
+nano config.php # Inserisci token, URL LibreNMS e chat_id autorizzati
 php bot.php
 ```
 
