@@ -1,0 +1,23 @@
+# Configurazioni personali
+config/config.php
+config.php
+config_v1_backup_*.php
+
+# Log e database
+logs/
+bot.log
+bot.db
+
+# File temporanei o di sistema
+*.swp
+*.swo
+.DS_Store
+
+# Backup
+*~
+
+# Escludi anche file di configurazione generati
+*.bak
+
+# Non escludere i sample di configurazione!
+!config.sample.php 
