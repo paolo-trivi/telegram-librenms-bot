@@ -1,0 +1,31 @@
+# Configurazioni personali e sensibili
+config/config.php
+config.php
+config_v1_backup_*.php
+*.secrets
+*.env
+*.private
+
+# Token, password, chatid (pattern comuni)
+*token*
+*password*
+*chatid*
+*secret*
+
+# Log e database
+logs/
+bot.log
+bot.db
+*.sqlite*
+
+# File temporanei o di sistema
+*.swp
+*.swo
+.DS_Store
+
+# Backup
+*~
+*.bak
+
+# Non escludere il file di esempio di configurazione!
+!config/config.sample.php 
