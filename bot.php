@@ -102,12 +102,15 @@ $logger->info("LibreBot v2.0 started", [
     'security_enabled' => $config['security']['rate_limiting'] ?? false
 ]);
 
+// Telegram API URL
+$telegramApi = "https://api.telegram.org/bot$botToken";
+
 echo Version::getInfo() . " started!\n";
 echo "Authorized chats: " . implode(', ', $allowedChatIds) . "\n";
 echo "Security: " . ($config['security']['rate_limiting'] ? 'Active' : 'Inactive') . "\n";
 echo "Language: " . strtoupper($language ?? 'en') . "\n";
-echo "💾 Database: $dbFile\n";
-echo "📝 Log: $logFile\n\n";
+echo "Database: $dbFile\n";
+echo "Log: $logFile\n\n";
 /**
  * Get user role from config
  */
