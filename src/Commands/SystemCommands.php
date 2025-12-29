@@ -6,31 +6,45 @@
  * @author Paolo Trivisonno
  * @version 2.0
  */
+namespace LibreBot\Commands;
+
+use Exception;
+use PDO;
+use LibreBot\Lib\LibreNMSAPI;
+use LibreBot\Lib\Logger;
+use LibreBot\Lib\SecurityManager;
+use LibreBot\Lib\AlertTracker;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
 class SystemCommands
 {
-    private $api;
-    private $logger;
-    private $security;
-    private $config;
-    private $db;
+    private LibreNMSAPI $api;
+    private Logger $logger;
+    private SecurityManager $security;
+    private array $config;
+    private PDO $db;
+    private AlertTracker $alertTracker;
+    private TranslatorInterface $translator;
 
-    public function __construct($api, $logger, $security, $config, $db)
+    public function __construct(LibreNMSAPI $api, Logger $logger, SecurityManager $security, array $config, PDO $db, AlertTracker $alertTracker, TranslatorInterface $translator)
     {
         $this->api = $api;
         $this->logger = $logger;
         $this->security = $security;
         $this->config = $config;
         $this->db = $db;
+        $this->alertTracker = $alertTracker;
+        $this->translator = $translator;
     }
 
     /**
      * Help menu completo
      */
-    public function getHelp($userRole = 'admin')
+    public function getHelp(string $userRole = 'admin'): string
     {
-        global $userRoles;
+        $userRoles = $this->config['userRoles'] ?? [];
         
-        $allowedCommands = $userRoles[$userRole] ?? $userRoles['viewer'];
+        $allowedCommands = $userRoles[$userRole] ?? $userRoles['viewer'] ?? [];
         
         $commands = [
             'alert' => [
@@ -105,6 +119,7 @@ class SystemCommands
             $uptimeFormatted = $this->formatDuration($uptime);
 
             $text = "🤖 LibreBot Status\n\n";
+            $text .= "📦 Version: " . \LibreBot\Lib\Version::getFull() . "\n";
             $text .= "✅ Status: Online\n";
             $text .= "⏰ Uptime: $uptimeFormatted\n";
             $text .= "💾 Memory: " . round(memory_get_usage(true) / 1024 / 1024, 2) . " MB\n";
@@ -404,7 +419,7 @@ class SystemCommands
     }
 
     /**
-     * Converti unità
+     * Convert units
      */
     public function convertUnits($value, $from, $to)
     {
@@ -472,10 +487,10 @@ class SystemCommands
         return false;
     }
 
-    private function getBotStartTime()
+    private function getBotStartTime(): int
     {
-        // Implementare tracking start time
-        return time() - 3600; // Mock: 1 ora fa
+        $startTime = $this->alertTracker->getBotStat('start_time');
+        return $startTime ? (int)$startTime : time();
     }
 
     private function formatDuration($seconds)

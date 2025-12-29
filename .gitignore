@@ -12,6 +12,10 @@ config_v1_backup_*.php
 *chatid*
 *secret*
 
+# Composer dependencies
+vendor/
+composer.lock
+
 # Log e database
 logs/
 bot.log

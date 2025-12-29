@@ -6,16 +6,21 @@
  * @author Paolo Trivisonno
  * @version 2.0
  */
+namespace LibreBot\Lib;
+
+use Exception;
+use PDO;
+
 class LibreNMSAPI
 {
-    private $url;
-    private $token;
-    private $logger;
-    private $db;
-    private $config;
-    private $cache = [];
+    private string $url;
+    private string $token;
+    private Logger $logger;
+    private PDO $db;
+    private array $config;
+    private array $cache = [];
 
-    public function __construct($url, $token, $logger, $db, $config)
+    public function __construct(string $url, string $token, Logger $logger, PDO $db, array $config)
     {
         $this->url = rtrim($url, '/');
         $this->token = $token;
@@ -55,7 +60,7 @@ class LibreNMSAPI
     /**
      * Chiamata API generica
      */
-    public function call($endpoint, $method = 'GET', $data = null, $useCache = true)
+    public function call(string $endpoint, string $method = 'GET', ?array $data = null, bool $useCache = true): array
     {
         $startTime = microtime(true);
         
@@ -79,8 +84,8 @@ class LibreNMSAPI
             ],
             CURLOPT_TIMEOUT => 30,
             CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_SSL_VERIFYPEER => $this->config['advanced']['verify_ssl'] ?? true,
+            CURLOPT_SSL_VERIFYHOST => ($this->config['advanced']['verify_ssl'] ?? true) ? 2 : 0,
             CURLOPT_USERAGENT => 'LibreBot/2.0'
         ]);
 
@@ -119,7 +124,7 @@ class LibreNMSAPI
     /**
      * Cache management
      */
-    private function getFromCache($key)
+    private function getFromCache(string $key): ?array
     {
         $stmt = $this->db->prepare("SELECT data, expires_at FROM api_cache WHERE cache_key = ?");
         $stmt->execute([$key]);
@@ -132,7 +137,7 @@ class LibreNMSAPI
         return null;
     }
 
-    private function saveToCache($key, $data)
+    private function saveToCache(string $key, array $data): void
     {
         $expiresAt = time() + $this->config['advanced']['cache_duration'];
         $stmt = $this->db->prepare("
@@ -145,7 +150,7 @@ class LibreNMSAPI
     /**
      * Pulisci cache scaduta
      */
-    public function cleanExpiredCache()
+    public function cleanExpiredCache(): int
     {
         $stmt = $this->db->prepare("DELETE FROM api_cache WHERE expires_at < ?");
         $stmt->execute([time()]);
@@ -260,14 +265,14 @@ class LibreNMSAPI
     }
 
     /**
-     * Modalità manutenzione
+     * Maintenance mode
      */
     public function setMaintenanceMode($deviceId, $duration = 3600, $reason = 'Maintenance via Telegram')
     {
         $startTime = time();
         $endTime = $startTime + $duration;
         
-        // Registra in database locale
+        // Register in local database
         $stmt = $this->db->prepare("
             INSERT INTO maintenance_windows (device_id, start_time, end_time, reason, created_by, created_at)
             VALUES (?, ?, ?, ?, ?, ?)

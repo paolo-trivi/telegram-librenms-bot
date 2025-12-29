@@ -1,29 +1,30 @@
 <?php
 /**
- * Esempio di configurazione LibreBot v2.0
- * Copia questo file in config/config.php e personalizza i valori!
+ * LibreBot v2.0 Sample Configuration
+ * Copy this file to config/config.php and customize the values!
  */
 
-// Configurazione del bot Telegram
-$botToken = 'INSERISCI_IL_TUO_TOKEN_TELEGRAM';
+// Telegram bot configuration
+$botToken = 'INSERT_YOUR_TELEGRAM_TOKEN';
+$language = 'en'; // Supported languages: en, it, fr, es, de, pt
 
-// Configurazione di LibreNMS
+// LibreNMS configuration
 $librenmsUrl = 'http://librenms.example.net';
-$librenmsToken = 'INSERISCI_IL_TUO_TOKEN_LIBRENMS';
+$librenmsToken = 'INSERT_YOUR_LIBRENMS_TOKEN';
 
-// Chat ID e thread autorizzati
+// Authorized chat IDs and threads
 $allowedChatIds = [
-    12345678, // Sostituisci con i tuoi chat ID autorizzati
+    12345678, // Replace with your authorized chat IDs
 ];
 $allowedThreads = [
-    null, // Facoltativo: thread ID per gruppi
+    null, // Optional: thread IDs for groups
 ];
 
-// Percorso dei file
+// File paths
 $logFile = __DIR__ . '/../logs/bot.log';
 $dbFile = __DIR__ . '/../logs/bot.db';
 
-// Configurazioni sicurezza
+// Security configuration
 $security = [
     'rate_limiting' => true,
     'max_commands_per_minute' => 10,
@@ -39,7 +40,7 @@ $security = [
     'ban_duration' => 3600
 ];
 
-// Ruoli utente
+// User roles
 $userRoles = [
     'admin' => [
         'alert_*', 'device_*', 'network_*', 'maintenance_*', 
@@ -55,12 +56,12 @@ $userRoles = [
     ]
 ];
 
-// Assegnazione ruoli agli utenti (chat_id => role)
+// Role assignment to users (chat_id => role)
 $userPermissions = [
     // 12345678 => 'admin',
 ];
 
-// Configurazione notifiche
+// Notification configuration
 $notifications = [
     'daily_report' => false,
     'daily_report_time' => '08:00',
@@ -70,7 +71,7 @@ $notifications = [
     'emergency_contacts' => []
 ];
 
-// Configurazione avanzata
+// Advanced configuration
 $advanced = [
     'enable_caching' => true,
     'cache_duration' => 300,
@@ -79,15 +80,25 @@ $advanced = [
     'enable_plugins' => false,
     'plugin_directory' => __DIR__ . '/../plugins',
     'backup_config' => true,
-    'backup_interval' => 86400
+    'backup_interval' => 86400,
+    'verify_ssl' => true // Set to false for self-signed certificates
 ];
 
-// Debug e sviluppo
+// Debug and development
 $debug = [
     'enabled' => false,
     'log_level' => 'INFO',
     'verbose_logging' => false
 ];
 
-// Raggruppa tutta la configurazione
-$config = compact('security', 'userRoles', 'userPermissions', 'notifications', 'advanced', 'debug'); 
+// Group all configuration
+$config = compact(
+    'allowedChatIds', 
+    'allowedThreads', 
+    'security', 
+    'userRoles', 
+    'userPermissions', 
+    'notifications', 
+    'advanced', 
+    'debug'
+); 

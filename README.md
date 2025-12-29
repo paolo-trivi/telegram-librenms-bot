@@ -1,154 +1,154 @@
-# 🤖 LibreBot v2.0 - Advanced Telegram Bot for LibreNMS
+# LibreBot v2.0 - Advanced Telegram Bot for LibreNMS
 
-Un bot Telegram avanzato e modulare scritto in PHP che si integra con [LibreNMS](https://www.librenms.org/) per il monitoraggio completo, gestione alert e troubleshooting di rete — tutto tramite messaggi Telegram!
-
----
-
-## 🚀 Novità v2.0
-
-### 🔐 **Sicurezza Avanzata**
-- **Rate limiting** configurabile per utente
-- **Sistema di ruoli** (admin/operator/viewer) con permessi granulari
-- **Validazione input rigorosa** con whitelist IP
-- **Logging strutturato** JSON con rotazione automatica
-- **Ban automatico** per tentativi di accesso falliti
-- **Audit trail** completo di tutte le operazioni
-
-### 🏗️ **Architettura Modulare**
-- **SecurityManager** per autenticazione e autorizzazione
-- **Logger** strutturato con livelli configurabili
-- **LibreNMS API** wrapper con caching intelligente
-- **Command classes** separate per categoria
-- **Database SQLite** per cache e tracking
-
-### 🆕 **Nuove Funzionalità**
-
-#### 📊 **Alert Management Avanzato**
-- `/alert_stats` - Statistiche alert dettagliate
-- `/alert_history <device_id>` - Storico alert per dispositivo
-- `/bulk_ack <pattern>` - Acknowledge multiplo con pattern
-- `/escalate <alert_id>` - Escalation alert con notifiche
-- `/top_alerts` - Top alert più frequenti
-
-#### 🖥️ **Device Management Esteso**
-- `/device_status <device_id>` - Status dettagliato con porte e alert
-- `/port_status <device_id> <port>` - Status porta specifica
-- `/device_add <hostname>` - Aggiunta dispositivi via bot
-- `/device_remove <device_id>` - Rimozione sicura dispositivi
-- `/maintenance <device_id> <on/off>` - Modalità manutenzione
-- `/performance_report <device_id>` - Report performance dettagliato
-- `/bandwidth_top` - Top dispositivi per utilizzo banda
-- `/dashboard` - Dashboard generale dispositivi
-
-#### 🌐 **Network Troubleshooting Completo**
-- `/mtr <host>` - My Traceroute continuo
-- `/dig <domain> <type>` - DNS lookup avanzato (A, MX, TXT, ecc.)
-- `/whois <domain/ip>` - Informazioni WHOIS filtrate
-- `/port_scan <host> <range>` - Scan porte con nmap
-- `/ssl_check <host>` - Verifica certificati SSL
-- `/http_check <url>` - Test risposta HTTP/HTTPS
-- `/network_summary <host>` - Riepilogo completo connettività
-
-#### 🤖 **Bot Management & Monitoring**
-- `/bot_status` - Status dettagliato del bot
-- `/bot_stats [period]` - Statistiche utilizzo e performance
-- `/health` - Health check completo del sistema
-- `/log [lines]` - Log formattato con filtri
-
-#### 🧮 **Utility Tools**
-- `/calc <cidr>` - Calcolatrice subnet/VLAN
-- `/convert <value> <from> <to>` - Conversioni unità
-- `/time <timezone>` - Orario in timezone specifico
+An advanced and modular Telegram bot written in PHP that integrates with [LibreNMS](https://www.librenms.org/) for complete monitoring, alert management, and network troubleshooting — all via Telegram messages!
 
 ---
 
-## 📋 Comandi Completi
+## New in v2.0
 
-### 🔔 Alert Management
+### **Advanced Security**
+- **Rate limiting** user-configurable
+- **Role system** (admin/operator/viewer) with granular permissions
+- **Strict input validation** with IP whitelist
+- **Structured JSON logging** with automatic rotation
+- **Automatic ban** for failed access attempts
+- **Complete audit trail** of all operations
+
+### **Modular Architecture**
+- **SecurityManager** for authentication and authorization
+- **Logger** structured with configurable levels
+- **LibreNMSAPI** wrapper with intelligent caching
+- **Command classes** separated by category
+- **SQLite Database** for cache and tracking
+
+### **New Features**
+
+#### **Advanced Alert Management**
+- `/alert_stats` - Detailed alert statistics
+- `/alert_history <device_id>` - Alert history for device
+- `/bulk_ack <pattern>` - Multiple acknowledge with pattern
+- `/escalate <alert_id>` - Alert escalation with notifications
+- `/top_alerts` - Most frequent top alerts
+
+#### **Extended Device Management**
+- `/device_status <device_id>` - Detailed status with ports and alerts
+- `/port_status <device_id> <port>` - Specific port status
+- `/device_add <hostname>` - Add devices via bot
+- `/device_remove <device_id>` - Securely remove devices
+- `/maintenance <device_id> <on/off>` - Maintenance mode
+- `/performance_report <device_id>` - Detailed performance report
+- `/bandwidth_top` - Top devices by bandwidth usage
+- `/dashboard` - General device dashboard
+
+#### **Complete Network Troubleshooting**
+- `/mtr <host>` - Continuous My Traceroute
+- `/dig <domain> <type>` - Advanced DNS lookup (A, MX, TXT, etc.)
+- `/whois <domain/ip>` - Filtered WHOIS information
+- `/port_scan <host> <range>` - Port scan using nmap
+- `/ssl_check <host>` - Verify SSL certificates
+- `/http_check <url>` - HTTP/HTTPS response test
+- `/network_summary <host>` - Complete connectivity summary
+
+#### **Bot Management & Monitoring**
+- `/bot_status` - Detailed bot status
+- `/bot_stats [period]` - Usage and performance statistics
+- `/health` - Complete system health check
+- `/log [lines]` - Formatted log with filters
+
+#### **Utility Tools**
+- `/calc <cidr>` - Subnet/VLAN calculator
+- `/convert <value> <from> <to>` - Unit conversions
+- `/time <timezone>` - Time in specific timezone
+
+---
+
+## Complete Commands
+
+### Alert Management
 ```
-/list                     → Elenca alert attivi
-/ack <id> [nota]         → Acknowledge alert
-/alert_stats             → Statistiche alert
-/alert_history <dev_id>  → Storico alert dispositivo
-/bulk_ack <pattern>      → ACK multiplo con pattern
-/escalate <id> <motivo>  → Escalation alert
-/top_alerts             → Top alert frequenti
+/list                     → List active alerts
+/ack <id> [note]         → Acknowledge alert
+/alert_stats             → Alert statistics
+/alert_history <dev_id>  → Device alert history
+/bulk_ack <pattern>      → Multiple ACK with pattern
+/escalate <id> <reason>  → Alert escalation
+/top_alerts             → Frequent top alerts
 ```
 
-### 🖥️ Device Management
+### Device Management
 ```
-/list_device [filtro]        → Lista dispositivi
-/device_status <id>          → Status dettagliato
-/port_status <id> <porta>    → Status porta specifica
-/device_add <hostname>       → Aggiungi dispositivo
-/device_remove <id>          → Rimuovi dispositivo
-/device_redetect <id>        → Ri-discovery dispositivo
-/maintenance <id> <on/off>   → Modalità manutenzione
-/performance_report <id>     → Report performance
-/bandwidth_top              → Top utilizzo banda
-/dashboard                  → Dashboard dispositivi
+/list_device [filter]        → List devices
+/device_status <id>          → Detailed status
+/port_status <id> <port>     → Specific port status
+/device_add <hostname>       → Add device
+/device_remove <id>          → Remove device
+/device_redetect <id>        → Device rediscovery
+/maintenance <id> <on/off>   → Maintenance mode
+/performance_report <id>     → Performance report
+/bandwidth_top              → Top bandwidth usage
+/dashboard                  → Device dashboard
 ```
 
-### 🌐 Network Tools
+### Network Tools
 ```
-/ping <host>            → Ping (5 pacchetti)
+/ping <host>            → Ping (5 packets)
 /trace <host>           → Traceroute
 /mtr <host>             → My Traceroute
 /ns <host>              → NSLookup
-/dig <domain> [type]    → DNS lookup avanzato
+/dig <domain> [type]    → Advanced DNS lookup
 /whois <domain/ip>      → WHOIS lookup
-/port_scan <host>       → Scan porte con nmap
-/ssl_check <host>       → Verifica SSL
-/http_check <url>       → Test HTTP/HTTPS
-/network_summary <host> → Riepilogo connettività
+/port_scan <host>       → Port scan with nmap
+/ssl_check <host>       → SSL verification
+/http_check <url>       → HTTP/HTTPS test
+/network_summary <host> → Connectivity summary
 ```
 
-### 🤖 Bot & System
+### Bot & System
 ```
-/help                   → Menu comandi per il tuo ruolo
-/bot_status            → Status del bot
-/bot_stats [period]    → Statistiche utilizzo
-/health                → Health check sistema
-/log [lines]           → Log del bot
+/help                   → Command menu for your role
+/bot_status            → Bot status
+/bot_stats [period]    → Usage statistics
+/health                → System health check
+/log [lines]           → Bot log
 ```
 
-### 🧮 Utilities
+### Utilities
 ```
-/calc <cidr>              → Calcola subnet (es. 192.168.1.0/24)
-/convert <val> <da> <a>   → Converti unità
-/time [timezone]          → Orario in timezone
+/calc <cidr>              → Subnet calculator (e.g. 192.168.1.0/24)
+/convert <val> <from> <to> → Unit conversion
+/time [timezone]          → Time in timezone
 ```
 
 ---
 
-## 🔐 Sistema di Sicurezza
+## Security System
 
 ### **Rate Limiting**
-- Limite configurabile comandi per minuto/ora
-- Tracking per singolo utente
-- Cleanup automatico vecchi record
+- Configurable command limit per minute/hour
+- Tracking per single user
+- Automatic cleanup of old records
 
-### **Sistema Ruoli**
-- **Admin**: Accesso completo a tutti i comandi
-- **Operator**: Comandi di monitoraggio e troubleshooting
-- **Viewer**: Solo visualizzazione alert e dispositivi
+### **Role System**
+- **Admin**: Full access to all commands
+- **Operator**: Monitoring and troubleshooting commands
+- **Viewer**: View-only access to alerts and devices
 
-### **Validazione Input**
-- Whitelist IP per comandi di rete
-- Sanitizzazione rigorosa parametri shell
-- Timeout configurabili per comandi esterni
+### **Input Validation**
+- IP Whitelist for network commands
+- Rigorous shell parameter sanitization
+- Configurable timeouts for external commands
 
 ### **Logging & Audit**
-- Log strutturato JSON con timestamp
-- Tracking completo comandi eseguiti
-- Rotazione automatica log
-- Alert su tentativi di accesso non autorizzati
+- JSON structured log with timestamp
+- Complete tracking of executed commands
+- Automatic log rotation
+- Alert on unauthorized access attempts
 
 ---
 
-## ⚙️ Installazione Rapida
+## Quick Installation
 
-### **Prerequisiti**
+### **Prerequisites**
 ```bash
 # Ubuntu/Debian
 sudo apt update
@@ -160,38 +160,38 @@ sudo yum install php php-curl php-pdo php-json
 sudo yum install iputils traceroute bind-utils whois mtr nmap
 ```
 
-### **Installazione**
+### **Installation**
 ```bash
 git clone https://github.com/paolo-trivi/telegram-librenms-bot.git
 cd telegram-librenms-bot
 
-# Installazione guidata
+# Guided installation
 php install.php
 
-# Avvia il bot
+# Start the bot
 php bot.php
 ```
 
-### **Installazione Manuale**
+### **Manual Installation**
 ```bash
-# Copia configurazione di esempio
+# Copy sample configuration
 cp config/config.sample.php config/config.php
 nano config/config.php
 
-# Crea directory
+# Create directories
 mkdir -p logs config lib commands
 
-# Avvia
+# Start
 php bot.php
 ```
 
 ---
 
-## 🔧 Configurazione Avanzata
+## Advanced Configuration
 
 ### **config/config.php**
 ```php
-// Sicurezza
+// Security
 $security = [
     'rate_limiting' => true,
     'max_commands_per_minute' => 10,
@@ -200,14 +200,17 @@ $security = [
     'ban_duration' => 3600
 ];
 
-// Ruoli utente
+// User roles
 $userPermissions = [
-    123456789 => 'admin',      // Chat ID -> Ruolo
+    123456789 => 'admin',      // Chat ID -> Role
     987654321 => 'operator',
     111222333 => 'viewer'
 ];
 
-// Notifiche
+// Languages
+$language = 'en'; // Supported: en, it, fr, es, de, pt
+
+// Notifications
 $notifications = [
     'daily_report' => true,
     'daily_report_time' => '08:00',
@@ -226,40 +229,45 @@ $debug = [
 
 ---
 
-## 🗂️ Struttura File
+## File Structure
 
 ```
 telegram-librenms-bot/
-├── bot.php                 # Bot principale v2.0
-├── install.php             # Script installazione
+├── bot.php                 # Main Bot v2.0
+├── install.php             # Installation script
 ├── config/
-│   └── config.php          # Configurazione principale
-├── lib/
-│   ├── Logger.php          # Sistema logging
-│   ├── SecurityManager.php # Gestione sicurezza
-│   └── LibreNMSAPI.php     # Wrapper API LibreNMS
-├── commands/
-│   ├── AlertCommands.php   # Comandi alert
-│   ├── DeviceCommands.php  # Comandi dispositivi
-│   ├── NetworkCommands.php # Comandi rete
-│   └── SystemCommands.php  # Comandi sistema
+│   └── config.php          # Main configuration
+├── src/
+│   ├── Lib/
+│   │   ├── Logger.php          # Logging system
+│   │   ├── SecurityManager.php # Security management
+│   │   └── LibreNMSAPI.php     # LibreNMS API Wrapper
+│   └── Commands/
+│       ├── AlertCommands.php   # Alert commands
+│       ├── DeviceCommands.php  # Device commands
+│       ├── NetworkCommands.php # Network commands
+│       └── SystemCommands.php  # System commands
+├── lang/
+│   ├── en.php              # English language (Default)
+│   ├── it.php              # Italian language
+│   └── ...                 # Other languages
 ├── logs/
-│   ├── bot.log            # Log principale
-│   └── bot.db             # Database SQLite
+│   ├── bot.log            # Main log
+│   └── bot.db             # SQLite Database
 └── docs/
-    └── API.md             # Documentazione API
+    └── API.md             # API Documentation
 ```
 
 ---
 
-## 📊 Performance & Monitoring
+## Performance & Monitoring
 
 ### **Self-Monitoring**
-Il bot monitora automaticamente:
-- Utilizzo memoria e CPU
-- Tempo di risposta comandi
-- Errori API LibreNMS
-- Tentativi di accesso falliti
+The bot automatically monitors:
+- Memory and CPU usage
+- Command response time
+- LibreNMS API errors
+- Failed access attempts
 - Cache hit/miss ratio
 
 ### **Health Check**
@@ -271,84 +279,84 @@ Il bot monitora automaticamente:
 php -r "require 'bot.php'; echo $systemCommands->getHealthCheck();"
 ```
 
-### **Metriche Disponibili**
-- Comandi eseguiti per periodo
-- Utenti attivi
-- Top comandi utilizzati
-- Errori per categoria
+### **Available Metrics**
+- Commands executed per period
+- Active users
+- Top used commands
+- Errors by category
 - Performance trends
 
 ---
 
-## 🔌 Estensibilità
+## Extensibility
 
 ### **Plugin System** (Roadmap)
 ```php
 // plugins/WeatherPlugin.php
 class WeatherPlugin {
     public function execute($args) {
-        return "🌤️ Meteo: 20°C, sereno";
+        return "Weather: 20°C, sunny";
     }
 }
 ```
 
 ### **Custom Commands**
-Aggiungi nuovi comandi modificando `executeCommand()` in `bot.php`
+Add new commands by modifying `executeCommand()` in `bot.php`
 
 ### **API Extensions**
-Estendi `LibreNMSAPI.php` per nuove funzionalità LibreNMS
+Extend `LibreNMSAPI.php` for new LibreNMS functionalities
 
 ---
 
-## 🚀 Roadmap v3.0
+## Roadmap v3.0
 
 ### **Planned Features**
-- [ ] **Web Dashboard** per gestione via browser
-- [ ] **Plugin system** per comandi personalizzati
-- [ ] **Scheduled tasks** e automazione
+- [ ] **Web Dashboard** for browser-based management
+- [ ] **Plugin system** for custom commands
+- [ ] **Scheduled tasks** and automation
 - [ ] **Multi-tenant** support
 - [ ] **Webhook** integrations
-- [ ] **Report** automatici via email
-- [ ] **Grafici** e visualizzazioni
-- [ ] **API REST** per integrazioni esterne
+- [ ] **Automatic Reports** via email
+- [ ] **Charts** and visualizations
+- [ ] **REST API** for external integrations
 
 
 ---
 
-## 🤝 Contributi
+## Contributing
 
-I contributi sono **benvenuti**! 
+Contributions are **welcome**!
 
-### **Come Contribuire**
-1. Fork del repository
-2. Crea branch per la feature (`git checkout -b feature/nuova-funzionalita`)
-3. Commit delle modifiche (`git commit -am 'Aggiunge nuova funzionalità'`)
-4. Push del branch (`git push origin feature/nuova-funzionalita`)
-5. Apri una Pull Request
+### **How to Contribute**
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -am 'Add new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
+5. Open a Pull Request
 
-### **Aree di Contributo**
-- 🐛 **Bug fixes**
-- ✨ **Nuove funzionalità**
-- 📖 **Documentazione**
-- 🧪 **Test automatici**
-- 🌍 **Traduzioni**
-- 🎨 **UI/UX improvements**
-
----
-
-## 📄 Licenza
-
-Questo progetto è distribuito sotto licenza **MIT**. Vedi il file [LICENSE](LICENSE) per i dettagli.
+### **Contribution Areas**
+- **Bug fixes**
+- **New features**
+- **Documentation**
+- **Automated tests**
+- **Translations**
+- **UI/UX improvements**
 
 ---
 
-**⭐ Se LibreBot ti è utile, lascia una stella su GitHub!**
+## License
 
-**🔗 Links Utili:**
+This project is distributed under the **MIT** license. See the [LICENSE](LICENSE) file for details.
+
+---
+
+**If LibreBot is useful to you, leave a star on GitHub!**
+
+**Useful Links:**
 - [LibreNMS](https://www.librenms.org/)
 - [Telegram Bot API](https://core.telegram.org/bots/api)
 - [PHP Documentation](https://www.php.net/docs.php)
 
 ---
 
-*Ultimo aggiornamento: Dicembre 2024 - v2.0*
+*Last update: December 2025 - v2.0.1*

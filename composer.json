@@ -1,0 +1,25 @@
+{
+    "name": "paolo-trivi/telegram-librenms-bot",
+    "description": "Telegram Bot for LibreNMS v2.0",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Paolo Trivisonno",
+            "email": "paolo@trivisonno.dev"
+        }
+    ],
+    "require": {
+        "php": ">=8.0",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-pdo": "*",
+        "ext-pdo_sqlite": "*",
+        "symfony/translation": "^6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "LibreBot\\": "src/"
+        }
+    }
+}

@@ -1,18 +1,23 @@
 <?php
 
 /**
- * SecurityManager - Gestione sicurezza e autenticazione
+ * SecurityManager - Security and authentication management
  * 
  * @author Paolo Trivisonno
  * @version 2.0
  */
+namespace LibreBot\Lib;
+
+use Exception;
+use PDO;
+
 class SecurityManager
 {
-    private $config;
-    private $db;
-    private $logger;
+    private array $config;
+    private PDO $db;
+    private Logger $logger;
 
-    public function __construct($config, $db, $logger)
+    public function __construct(array $config, PDO $db, Logger $logger)
     {
         $this->config = $config;
         $this->db = $db;
@@ -21,7 +26,7 @@ class SecurityManager
     }
 
     /**
-     * Inizializza le tabelle del database per il rate limiting
+     * Initialize database tables for rate limiting
      */
     private function initializeTables()
     {
@@ -56,11 +61,12 @@ class SecurityManager
     }
 
     /**
-     * Verifica se un utente è autorizzato
+     * Check if user is authorized
      */
-    public function isAuthorized($chatId, $threadId = null)
+    public function isAuthorized(int $chatId, ?int $threadId = null): bool
     {
-        global $allowedChatIds, $allowedThreads;
+        $allowedChatIds = $this->config['allowedChatIds'] ?? [];
+        $allowedThreads = $this->config['allowedThreads'] ?? [];
         
         if (!in_array($chatId, $allowedChatIds)) {
             $this->logFailedAttempt($chatId, 'unauthorized_chat');
@@ -76,7 +82,7 @@ class SecurityManager
     }
 
     /**
-     * Verifica se un utente è bannato
+     * Check if user is banned
      */
     public function isBanned($chatId)
     {
@@ -92,7 +98,7 @@ class SecurityManager
     }
 
     /**
-     * Verifica il rate limiting
+     * Check rate limiting
      */
     public function checkRateLimit($chatId)
     {
@@ -104,10 +110,10 @@ class SecurityManager
         $minuteAgo = $now - 60;
         $hourAgo = $now - 3600;
 
-        // Pulisci vecchi record
+        // Clean old records
         $this->db->exec("DELETE FROM rate_limit WHERE command_time < $hourAgo");
 
-        // Conta comandi nell'ultimo minuto
+        // Count commands in last minute
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM rate_limit WHERE chat_id = ? AND command_time > ?");
         $stmt->execute([$chatId, $minuteAgo]);
         $commandsLastMinute = $stmt->fetchColumn();
@@ -117,7 +123,7 @@ class SecurityManager
             return false;
         }
 
-        // Conta comandi nell'ultima ora
+        // Count commands in last hour
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM rate_limit WHERE chat_id = ? AND command_time > ?");
         $stmt->execute([$chatId, $hourAgo]);
         $commandsLastHour = $stmt->fetchColumn();
@@ -127,7 +133,7 @@ class SecurityManager
             return false;
         }
 
-        // Registra il comando
+        // Register command
         $stmt = $this->db->prepare("INSERT INTO rate_limit (chat_id, command_time) VALUES (?, ?)");
         $stmt->execute([$chatId, $now]);
 
@@ -135,13 +141,14 @@ class SecurityManager
     }
 
     /**
-     * Verifica i permessi per un comando
+     * Check permissions for a command
      */
-    public function hasPermission($chatId, $command)
+    public function hasPermission(int $chatId, string $command): bool
     {
-        global $userPermissions, $userRoles;
+        $userPermissions = $this->config['userPermissions'] ?? [];
+        $userRoles = $this->config['userRoles'] ?? [];
 
-        // Se non ci sono permessi configurati, usa il comportamento legacy
+        // If no permissions configured, use legacy behavior
         if (empty($userPermissions)) {
             return true;
         }
@@ -149,7 +156,7 @@ class SecurityManager
         $userRole = $userPermissions[$chatId] ?? 'viewer';
         $allowedCommands = $userRoles[$userRole] ?? [];
 
-        // Verifica permessi wildcard (es. alert_*)
+        // Check wildcard permissions (e.g. alert_*)
         foreach ($allowedCommands as $allowedCommand) {
             if (str_ends_with($allowedCommand, '*')) {
                 $prefix = rtrim($allowedCommand, '*');
@@ -166,31 +173,31 @@ class SecurityManager
     }
 
     /**
-     * Valida e sanitizza input per comandi shell
+     * Validate and sanitize input for shell commands
      */
     public function validateShellInput($input, $type = 'host')
     {
         switch ($type) {
             case 'host':
-                // Valida hostname o IP
+                // Validate hostname or IP
                 if (filter_var($input, FILTER_VALIDATE_IP)) {
                     return $this->isIpWhitelisted($input) ? $input : false;
                 }
-                // Valida hostname
+                // Validate hostname
                 if (preg_match('/^[a-zA-Z0-9\.\-]+$/', $input) && strlen($input) <= 255) {
                     return $input;
                 }
                 break;
                 
             case 'domain':
-                // Valida domain name
+                // Validate domain name
                 if (preg_match('/^[a-zA-Z0-9\.\-]+$/', $input) && strlen($input) <= 255) {
                     return $input;
                 }
                 break;
                 
             case 'port':
-                // Valida porta
+                // Validate port
                 $port = intval($input);
                 if ($port >= 1 && $port <= 65535) {
                     return $port;
@@ -198,7 +205,7 @@ class SecurityManager
                 break;
                 
             case 'port_range':
-                // Valida range porte (es. 80-443)
+                // Validate port range (e.g. 80-443)
                 if (preg_match('/^(\d+)-(\d+)$/', $input, $matches)) {
                     $start = intval($matches[1]);
                     $end = intval($matches[2]);
@@ -213,7 +220,7 @@ class SecurityManager
     }
 
     /**
-     * Verifica se un IP è nella whitelist
+     * Check if IP is in whitelist
      */
     private function isIpWhitelisted($ip)
     {
@@ -229,7 +236,7 @@ class SecurityManager
     }
 
     /**
-     * Verifica se un IP è in un range CIDR
+     * Check if IP is in CIDR range
      */
     private function ipInRange($ip, $cidr)
     {
@@ -243,7 +250,7 @@ class SecurityManager
     }
 
     /**
-     * Registra un tentativo fallito
+     * Log failed attempt
      */
     private function logFailedAttempt($chatId, $reason)
     {
@@ -253,20 +260,20 @@ class SecurityManager
 
         $now = time();
         
-        // Incrementa counter tentativi falliti
+        // Increment failed attempts counter
         $stmt = $this->db->prepare("
             INSERT OR REPLACE INTO failed_attempts (chat_id, attempts, last_attempt, banned_until) 
             VALUES (?, COALESCE((SELECT attempts FROM failed_attempts WHERE chat_id = ?), 0) + 1, ?, 0)
         ");
         $stmt->execute([$chatId, $chatId, $now]);
 
-        // Verifica se superato il limite
+        // Check if limit exceeded
         $stmt = $this->db->prepare("SELECT attempts FROM failed_attempts WHERE chat_id = ?");
         $stmt->execute([$chatId]);
         $attempts = $stmt->fetchColumn();
 
         if ($attempts >= $this->config['security']['max_failed_attempts']) {
-            // Banna l'utente
+            // Ban user
             $banUntil = $now + $this->config['security']['ban_duration'];
             $stmt = $this->db->prepare("UPDATE failed_attempts SET banned_until = ? WHERE chat_id = ?");
             $stmt->execute([$banUntil, $chatId]);
@@ -278,7 +285,7 @@ class SecurityManager
     }
 
     /**
-     * Registra l'esecuzione di un comando
+     * Log command execution
      */
     public function logCommandExecution($chatId, $username, $command, $success, $executionTime)
     {
@@ -290,24 +297,24 @@ class SecurityManager
     }
 
     /**
-     * Ottieni statistiche di sicurezza
+     * Get security statistics
      */
     public function getSecurityStats()
     {
         $stats = [];
         
-        // Comandi nelle ultime 24 ore
+        // Commands in last 24 hours
         $yesterday = time() - 86400;
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM command_history WHERE timestamp > ?");
         $stmt->execute([$yesterday]);
         $stats['commands_24h'] = $stmt->fetchColumn();
 
-        // Tentativi falliti nelle ultime 24 ore
+        // Failed attempts in last 24 hours
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM failed_attempts WHERE last_attempt > ?");
         $stmt->execute([$yesterday]);
         $stats['failed_attempts_24h'] = $stmt->fetchColumn();
 
-        // Utenti attualmente bannati
+        // Currently banned users
         $now = time();
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM failed_attempts WHERE banned_until > ?");
         $stmt->execute([$now]);
@@ -317,7 +324,7 @@ class SecurityManager
     }
 
     /**
-     * Reset failed attempts per un utente
+     * Reset failed attempts for a user
      */
     public function resetFailedAttempts($chatId)
     {

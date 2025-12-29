@@ -6,17 +6,27 @@
  * @author Paolo Trivisonno
  * @version 2.0
  */
+namespace LibreBot\Commands;
+
+use Exception;
+use LibreBot\Lib\LibreNMSAPI;
+use LibreBot\Lib\Logger;
+use LibreBot\Lib\SecurityManager;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
 class DeviceCommands
 {
     private $api;
     private $logger;
     private $security;
+    private TranslatorInterface $translator;
 
-    public function __construct($api, $logger, $security)
+    public function __construct($api, $logger, $security, TranslatorInterface $translator)
     {
         $this->api = $api;
         $this->logger = $logger;
         $this->security = $security;
+        $this->translator = $translator;
     }
 
     /**
@@ -279,7 +289,7 @@ class DeviceCommands
     }
 
     /**
-     * Modalità manutenzione
+     * Maintenance mode
      */
     public function setMaintenanceMode($deviceId, $action, $duration = 3600, $reason = 'Maintenance via Telegram', $username = '')
     {

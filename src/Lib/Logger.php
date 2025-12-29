@@ -6,6 +6,8 @@
  * @author Paolo Trivisonno
  * @version 2.0
  */
+namespace LibreBot\Lib;
+
 class Logger
 {
     private $logFile;

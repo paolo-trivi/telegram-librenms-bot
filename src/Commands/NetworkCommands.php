@@ -6,17 +6,26 @@
  * @author Paolo Trivisonno
  * @version 2.0
  */
+namespace LibreBot\Commands;
+
+use Exception;
+use LibreBot\Lib\Logger;
+use LibreBot\Lib\SecurityManager;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
 class NetworkCommands
 {
     private $logger;
     private $security;
     private $config;
+    private TranslatorInterface $translator;
 
-    public function __construct($logger, $security, $config)
+    public function __construct($logger, $security, $config, TranslatorInterface $translator)
     {
         $this->logger = $logger;
         $this->security = $security;
         $this->config = $config;
+        $this->translator = $translator;
     }
 
     /**
@@ -167,7 +176,7 @@ class NetworkCommands
      */
     public function whois($target, $username = '')
     {
-        // Valida se è IP o dominio
+        // Validate if IP or domain
         if (filter_var($target, FILTER_VALIDATE_IP)) {
             $validatedTarget = $this->security->validateShellInput($target, 'host');
         } else {
@@ -475,7 +484,7 @@ class NetworkCommands
     }
 
     /**
-     * Verifica se un comando è disponibile
+     * Check if command is available
      */
     private function isCommandAvailable($command)
     {

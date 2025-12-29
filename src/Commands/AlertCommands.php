@@ -6,33 +6,52 @@
  * @author Paolo Trivisonno
  * @version 2.0
  */
+namespace LibreBot\Commands;
+
+use Exception;
+use LibreBot\Lib\LibreNMSAPI;
+use LibreBot\Lib\Logger;
+use LibreBot\Lib\SecurityManager;
+use LibreBot\Lib\AlertTracker;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
 class AlertCommands
 {
-    private $api;
-    private $logger;
-    private $security;
+    private LibreNMSAPI $api;
+    private Logger $logger;
+    private SecurityManager $security;
+    private AlertTracker $alertTracker;
+    private TranslatorInterface $translator;
 
-    public function __construct($api, $logger, $security)
+    public function __construct(LibreNMSAPI $api, Logger $logger, SecurityManager $security, AlertTracker $alertTracker, TranslatorInterface $translator)
     {
         $this->api = $api;
         $this->logger = $logger;
         $this->security = $security;
+        $this->alertTracker = $alertTracker;
+        $this->translator = $translator;
     }
 
     /**
      * Lista alert attivi
      */
-    public function listAlerts($chatId, $threadId)
+    /**
+     * Lista alert attivi
+     */
+    public function listAlerts(int $chatId, ?int $threadId = null): string
     {
         try {
             $alerts = $this->api->getActiveAlerts();
             $alertList = $alerts['alerts'] ?? [];
             
             if (empty($alertList)) {
-                return "✅ Nessun alert attivo.";
+                return "Nessun alert attivo.";
             }
 
-            $text = "⚠️ Alert attivi (" . count($alertList) . "):\n\n";
+            // Traccia tutti gli alert per le statistiche
+            $this->alertTracker->trackAlerts($alertList);
+
+            $text = "Alert attivi (" . count($alertList) . "):\n\n";
             $alertCount = count($alertList);
 
             foreach ($alertList as $index => $alert) {
@@ -92,10 +111,13 @@ class AlertCommands
     /**
      * Acknowledge alert
      */
-    public function acknowledgeAlert($alertId, $note, $chatId, $username)
+    public function acknowledgeAlert(int $alertId, string $note, int $chatId, string $username): string
     {
         try {
             $response = $this->api->acknowledgeAlert($alertId, $note);
+            
+            // Traccia acknowledgment
+            $this->alertTracker->setAcknowledged((int)$alertId, $username);
             
             $this->logger->info("Alert $alertId acknowledged by $username", [
                 'alert_id' => $alertId,
@@ -103,7 +125,7 @@ class AlertCommands
                 'user' => $username
             ]);
 
-            return "✅ ACK eseguito su alert $alertId\nNota: $note";
+            return "ACK eseguito su alert $alertId\nNota: $note";
 
         } catch (Exception $e) {
             $this->logger->error("Failed to acknowledge alert $alertId: " . $e->getMessage());
@@ -114,7 +136,7 @@ class AlertCommands
     /**
      * Statistiche alert
      */
-    public function getAlertStats($period = 'today')
+    public function getAlertStats(string $period = 'today'): string
     {
         try {
             $stats = $this->api->getAlertStats($period);
@@ -136,10 +158,10 @@ class AlertCommands
                 }
             }
 
-            // Aggiungi top alert più frequenti
+            // Add most frequent top alerts
             $topAlerts = $this->getTopAlertTypes();
             if (!empty($topAlerts)) {
-                $text .= "\n🔥 Top alert types:\n";
+                $text .= "\nTop alert types:\n";
                 foreach (array_slice($topAlerts, 0, 5) as $alertType => $count) {
                     $text .= "• $alertType: $count\n";
                 }
@@ -154,7 +176,7 @@ class AlertCommands
     }
 
     /**
-     * Storico alert per dispositivo
+     * Alert history for device
      */
     public function getAlertHistory($deviceId, $limit = 10)
     {
@@ -215,7 +237,7 @@ class AlertCommands
     }
 
     /**
-     * Top alert più frequenti
+     * Most frequent top alerts
      */
     public function getTopAlerts($limit = 10)
     {
@@ -306,16 +328,8 @@ class AlertCommands
     /**
      * Calcola top alert types dal database locale
      */
-    private function getTopAlertTypes($limit = 10)
+    private function getTopAlertTypes(int $limit = 10): array
     {
-        // Questa funzione richiederebbe un tracking locale degli alert
-        // Per ora ritorna un mock - implementare con database
-        return [
-            'Device Down' => 15,
-            'High CPU Usage' => 12,
-            'Interface Down' => 8,
-            'High Memory Usage' => 6,
-            'Disk Space Low' => 4
-        ];
+        return $this->alertTracker->getTopAlertTypes($limit);
     }
 }
