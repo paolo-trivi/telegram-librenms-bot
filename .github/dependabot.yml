@@ -1,0 +1,17 @@
+# Dependabot — aggiornamenti automatici settimanali (lunedì, ora di Roma).
+# Minor/patch raggruppati in un'unica PR per ecosistema; le major arrivano una per PR.
+# Tracciato su Jira: SVIL-56.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Rome
+    open-pull-requests-limit: 5
+    groups:
+      composer_minor_patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
