@@ -15,7 +15,7 @@
         "ext-json": "*",
         "ext-pdo": "*",
         "ext-pdo_sqlite": "*",
-        "symfony/translation": "^6.0"
+        "symfony/translation": "^8.1"
     },
     "autoload": {
         "psr-4": {
